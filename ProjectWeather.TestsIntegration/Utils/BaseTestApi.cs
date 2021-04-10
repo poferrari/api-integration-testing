@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
-using Newtonsoft.Json;
 using NUnit.Framework;
 using ProjectWeather.Api.Models;
 using System.Net.Http;
@@ -57,8 +56,7 @@ namespace ProjectWeather.TestsIntegration.Utils
             var response = await _httpClient.PostAsJsonAsync(_requestUriLogin, userData);
             response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<TokenDto>(json);
+            return await response.DeserializeObject<TokenDto>();
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using ProjectWeather.Api.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace ProjectWeather.Api.Controllers
@@ -12,11 +12,6 @@ namespace ProjectWeather.Api.Controllers
     [Route("api/[controller]")]
     public class WeatherForecastController : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
-
         private readonly ILogger<WeatherForecastController> _logger;
 
         public WeatherForecastController(ILogger<WeatherForecastController> logger)
@@ -25,24 +20,26 @@ namespace ProjectWeather.Api.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
+        public IActionResult Get()
         {
-            var rng = new Random();
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Id = Guid.NewGuid(),
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            })
-            .ToArray();
+            return Ok(Startup.WeatherForecasts);
         }
 
         [HttpPost]
         public IActionResult Post(WeatherForecast weatherForecast)
         {
             weatherForecast.Id = Guid.NewGuid();
+
+            Startup.WeatherForecasts.Add(weatherForecast);
+
             return Created(nameof(Post), weatherForecast);
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult Get(Guid id)
+        {
+            var weatherForecast = Startup.WeatherForecasts.FirstOrDefault(t => t.Id == id);
+            return Ok(weatherForecast);
         }
     }
 }

@@ -9,6 +9,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using ProjectWeather.Api.Models;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ProjectWeather.Api
 {
@@ -16,10 +18,26 @@ namespace ProjectWeather.Api
     {
         private readonly IHostEnvironment _hostEnvironment;
 
+        private static readonly string[] _summaries = new[]
+        {
+            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+        };
+        public static List<WeatherForecast> WeatherForecasts { get; private set; }
+
         public Startup(IConfiguration configuration, IHostEnvironment hostEnvironment)
         {
             Configuration = configuration;
             _hostEnvironment = hostEnvironment;
+
+            var rng = new Random();
+            WeatherForecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            {
+                Id = Guid.NewGuid(),
+                Date = DateTime.Now.AddDays(index),
+                TemperatureC = rng.Next(-20, 55),
+                Summary = _summaries[rng.Next(_summaries.Length)]
+            })
+            .ToList();
         }
 
         public IConfiguration Configuration { get; }

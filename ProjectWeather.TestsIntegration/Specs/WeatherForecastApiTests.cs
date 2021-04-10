@@ -1,20 +1,21 @@
 using Bogus;
-using Newtonsoft.Json;
+using FluentAssertions;
 using NUnit.Framework;
 using ProjectWeather.Api;
+using ProjectWeather.Api.Models;
 using ProjectWeather.TestsIntegration.Extensions;
 using ProjectWeather.TestsIntegration.Utils;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
-namespace ProjectWeather.TestsIntegration
+namespace ProjectWeather.TestsIntegration.Specs
 {
     [TestFixture]
     public class WeatherForecastApiTests : BaseTestApi
     {
         private const string _baseRequestUri = "api/WeatherForecast";
         private Faker _faker;
+        private WeatherForecast _weatherForecast;
 
         [SetUp]
         public async Task Setup()
@@ -22,7 +23,7 @@ namespace ProjectWeather.TestsIntegration
             _faker = new Faker("pt_BR");
 
             await Auth();
-            _httpClient.SetToken(UserToken);
+            _httpClient.SetBearerToken(UserToken);
         }
 
         [Test]
@@ -35,7 +36,7 @@ namespace ProjectWeather.TestsIntegration
             getResponse.EnsureSuccessStatusCode();
         }
 
-        [Test]
+        [Test, Order(1)]
         public async Task PostWeatherForecast_Successful()
         {
             // Arrange            
@@ -45,21 +46,36 @@ namespace ProjectWeather.TestsIntegration
                 Summary = _faker.Commerce.ProductName(),
                 TemperatureC = _faker.Random.Int()
             };
-            var serialized = JsonConvert.SerializeObject(weatherForecast);
-
-            var content = new StringContent(serialized);
-            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-
-            var postRequest = new HttpRequestMessage(HttpMethod.Post, _baseRequestUri)
-            {
-                Content = content
-            };
+            var postRequest = HttpRequestMessageUtil.BuilderRequestMessage(HttpMethod.Post, _baseRequestUri, weatherForecast);
 
             // Act
             var postResponse = await _httpClient.SendAsync(postRequest);
+            _weatherForecast = await postResponse.DeserializeObject<WeatherForecast>();
 
             // Assertion
             postResponse.EnsureSuccessStatusCode();
+            VerifyWeatherForecast();
+        }
+
+        [Test, Order(2)]
+        public async Task GetWeatherForecastById_Successful()
+        {
+            // Arrange            
+            var requestUri = $"{_baseRequestUri}/{_weatherForecast.Id}";
+
+            // Act
+            var getResponse = await _httpClient.GetAsync(requestUri);
+            _weatherForecast = await getResponse.DeserializeObject<WeatherForecast>();
+
+            // Assertion
+            getResponse.EnsureSuccessStatusCode();
+            VerifyWeatherForecast();
+        }
+
+        private void VerifyWeatherForecast()
+        {
+            _weatherForecast.Should().NotBeNull();
+            _weatherForecast.Should().BeOfType(typeof(WeatherForecast));
         }
     }
 }
