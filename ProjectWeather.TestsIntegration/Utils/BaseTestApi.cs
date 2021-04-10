@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 using ProjectWeather.Api.Models;
+using ProjectWeather.TestsIntegration.Extensions;
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -16,19 +17,12 @@ namespace ProjectWeather.TestsIntegration.Utils
         protected string UserToken { get; set; }
 
         [SetUp]
-        public void SetUpHttpClient()
+        public async Task SetUpHttpClient()
         {
-            _httpClient = TestConfigurations.IsBaseUriConfigured ?
-                new HttpClient
-                {
-                    BaseAddress = new Uri(TestConfigurations.BaseUri)
-                } :
-                Factory.CreateClient(new WebApplicationFactoryClientOptions
-                {
-                    AllowAutoRedirect = true,
-                    HandleCookies = true,
-                    MaxAutomaticRedirections = 7
-                });
+            _httpClient = BuilderHttpClient();
+
+            await Auth();
+            _httpClient.SetBearerToken(UserToken);
         }
 
         [TearDown]
@@ -36,6 +30,25 @@ namespace ProjectWeather.TestsIntegration.Utils
         {
             _httpClient.Dispose();
         }
+
+        private static HttpClient BuilderHttpClient()
+        {
+            if (TestConfigurations.IsBaseUriConfigured)
+            {
+                return new HttpClient
+                {
+                    BaseAddress = new Uri(TestConfigurations.BaseUri)
+                };
+            }
+
+            return Factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = true,
+                HandleCookies = true,
+                MaxAutomaticRedirections = 7
+            });
+        }
+
 
         protected async Task Auth()
         {

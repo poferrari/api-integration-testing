@@ -1,9 +1,7 @@
 using Bogus;
 using FluentAssertions;
 using NUnit.Framework;
-using ProjectWeather.Api;
 using ProjectWeather.Api.Models;
-using ProjectWeather.TestsIntegration.Extensions;
 using ProjectWeather.TestsIntegration.Utils;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -18,12 +16,9 @@ namespace ProjectWeather.TestsIntegration.Specs
         private WeatherForecast _weatherForecast;
 
         [SetUp]
-        public async Task Setup()
+        public void Setup()
         {
             _faker = new Faker("pt_BR");
-
-            await Auth();
-            _httpClient.SetBearerToken(UserToken);
         }
 
         [Test]
