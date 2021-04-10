@@ -24,7 +24,7 @@ namespace ProjectWeather.TestsIntegration.Utils
                 TestConfigurations = configuration.GetSection(nameof(TestConfigurations)).Get<TestConfigurations>();
             }
 
-            if (Factory is null)
+            if (IsNotBaseUriConfigured())
             {
                 Factory = new WebApplicationFactory<Startup>()
                     .WithWebHostBuilder(builder =>
@@ -37,13 +37,19 @@ namespace ProjectWeather.TestsIntegration.Utils
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            Factory.Dispose();
+            if (Factory != null)
+            {
+                Factory.Dispose();
+            }
         }
 
         private static IConfiguration BuildConfiguration()
-         => new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .Build();
+            => new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .Build();
+
+        private static bool IsNotBaseUriConfigured()
+            => !TestConfigurations.IsBaseUriConfigured && Factory is null;
     }
 }
